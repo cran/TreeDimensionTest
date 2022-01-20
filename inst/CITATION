@@ -1,0 +1,12 @@
+bibentry(bibtype="Article",
+  key = "Tenha:2022",
+  header = "To cite algorithms or code from this package in publications, use",
+  title = "Inference of trajectory presence by tree dimension and subset specificity by subtree cover",
+  journal = "PLoS Computational Biology",
+  year = "2022",
+  volume = "",
+  number = "",
+  pages = "(Provisionally accepted)",
+  author = c(person("Lovemore", "Tenha"), person("Mingzhou", "Song")),
+  doi = "10.1109/TCBB.2021.3077573"
+)
