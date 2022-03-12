@@ -15,6 +15,13 @@
 #'  dimensionality reduction or "none" to not perform dimensionality
 #'  reduction before the test.
 #'
+#' @details If the input data is already after dimension reduction, use
+#' \code{dim.reduction="none"}. The method is described in
+#' \insertCite{Tenha:2022}{TreeDimensionTest}.
+#'
+#' @references
+#' \insertAllCited{}
+#'
 #' @return A list with the following components:
 #' \itemize{
 #'  \item tdt_measure The tree dimension value for the given input data
@@ -23,12 +30,18 @@
 #'  \item leaves Number of leaf/degree1 vertices in the MST  of the data
 #'  \item diameter The tree diameter of MST, where each edge is of unit length
 #'  \item p.value The pvalue for the S statistic. Pvalue measures presence of trajectory in input x.
+#'  \item original_dimension If "pca" is selected, the number of dimensions in the original dataset
+#'  \item pca_components If "pca" is selected, the number of pca components selected after dimensionality reduction
+#'  \item mst A vector of edges of the mst computed on x. Length of vector is always even.
 #' }
+#'
 #' @importFrom Rcpp evalCpp
 #' @importFrom graphics plot legend
 #' @importFrom stats dist plnorm rnorm cov prcomp
 #' @importFrom mlpack emst
 #' @import nFactors
+#' @importFrom Rdpack reprompt
+#'
 #' @export
 #' @useDynLib TreeDimensionTest
 
@@ -45,7 +58,7 @@ test.trajectory <- function(
 
   MST <- match.arg(MST)
   dim.reduction <- match.arg(dim.reduction)
-
+  original_dimension = ncol(x)
   ###Apply pca if dim.reduction="pca"
 
   if(dim.reduction=="pca")
@@ -71,7 +84,7 @@ test.trajectory <- function(
 
 
   #Getting observed statistic and tree dimension
-  estimates = getStatistics(x, nrow(x), MST)
+  estimates = getStatistics(x, nrow(x), MST, T)
 
   #Fitting lognormal and calculating pvalue for s statistic
   fit = fitdist(dist, distr="lnorm", start = list(meanlog=1, sdlog =1))
@@ -85,6 +98,16 @@ test.trajectory <- function(
   result$leaves = estimates$leafs
   result$diameter = estimates$diameter
   result$p.value = plnorm(estimates$stat, meanlog = fit$estimate['meanlog'] , sdlog = fit$estimate['sdlog'], lower.tail = F)
+  result$mst = estimates$mst
+
+  #Number of dimensions before and after pca dimensionality reduction added to result
+  if(dim.reduction=="pca")
+  {
+    result$original_dimension = original_dimension
+    result$pca_components = ncol(x)
+  }
+
+  class(result)="treedim"
 
   return(result)
 }
@@ -135,14 +158,15 @@ empirical.distributions <- function(
   return(result)
 }
 
+
+
+
 #' Visualizing Euclidean Minimum Spanning Trees
 #'
-#' Plots an Euclidean minimum spanning tree from given input data. If
-#'  labels for the samples in the data are provided, a legend is also
-#'   plotted.
+#' Plots an Euclidean minimum spanning tree from given input data.
 
-#' @param x input matrix, with rows as observations and columns as features
-#' @param node.labels vector of labels for observations in x (vertices)
+#' @param x An object of type "treedim"; returned from test.trajectory, compute.stats or separability
+#' @param ... ignore
 #' @param node.col vector of colors for the observations in x (vertices)
 #' @param node.size numerical value to represent size of nodes in the plot
 #' @param main title for the plot
@@ -150,46 +174,57 @@ empirical.distributions <- function(
 #' @return result plots a minimum spanning tree for input data x
 #' @import igraph
 #' @import RColorBrewer
+#' @rdname plot.test
 #' @export
 
-plotTree <-  function(
-  x, node.labels="", node.col="orange",
+plot.treedim <-  function(x,...,
+  node.col="orange",
   node.size=5, main="MST plot",
   legend.cord=c(-1.2,1.1))
 {
 
   if(missing(x)) stop("Argument x is required.")
 
+  #Create an igraph object
+  g = graph(c())
 
-  #Compute exact tree of x
-  #mtree = make.tree(x)
+  #Create graph object using edgelist mst, from x
 
-  #transformation of data into igraph
-  edges = get_edges(x, MST="boruvka")
-  g=igraph::graph(edges, directed = FALSE)
+   if(is.list(x$mst))
+    g=igraph::graph(x$mst$edges, directed = FALSE)
 
-  #coloring
-  if(length(node.col)!=nrow(x))
+  else
+    g=igraph::graph(x$mst, directed = FALSE)
+
+
+  #coloring; if object x is from separability
+  if(is.list(x$mst))
   {
-
-    #coloring
-    qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-    col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-
-    unique_labels = unique(node.labels)
-    cols = vector(length=length(node.labels))
-    j=1
-    for(i in unique_labels)
+    if(length(node.col)!= length(unique(x$mst$edges)))
     {
-      cols[which(node.labels %in% i)]=j
-      j=j+1
-    }
 
-    node.col = col_vector[cols]
+      #coloring
+      qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+      col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+
+      unique_labels = unique(x$mst$labels)
+      cols = vector(length=length(x$mst$labels))
+      j=1
+      for(i in unique_labels)
+      {
+        cols[which(x$mst$labels %in% i)]=j
+        j=j+1
+      }
+
+      node.col = col_vector[cols]
+    }
   }
 
-  plot(g, vertex.size=node.size ,vertex.color = node.col ,vertex.label="",main=main ,cex.main=0.03,layout=layout_with_kk, font.main=0.7)
-  legend(legend.cord[1], legend.cord[2], legend = unique(node.labels) , col= unique(node.col), lwd=4, cex=0.6)
+  plot.igraph(g, vertex.size=node.size ,vertex.color = node.col ,vertex.label="",main=main ,cex.main=0.03,layout=layout_components, font.main=0.7)
+
+  #If x is treedim object from separability
+  if(is.list(x$mst))
+    legend(legend.cord[1], legend.cord[2], legend = unique(x$mst$labels) , col= unique(node.col), lwd=4, cex=0.6)
 
 }
 
@@ -246,6 +281,10 @@ randomize.data = function(sample, dim, iter, max_iter)
 #'  \item tdt_effect Effect size for tree dimension
 #'  \item leaves Number of leaf/degree1 vertices in the MST  of the data
 #'  \item diameter The tree diameter of MST, where each edge is of unit length
+#'  \item original_dimension If "pca" is selected, the number of dimensions in the original dataset
+#'  \item pca_components If "pca" is selected, the number of pca components selected after dimensionality reduction
+#'  \item mst A vector of edges of the mst computed on x. Length of vector is always even.
+
 #'  }
 #' @export
 
@@ -257,6 +296,7 @@ compute.stats <- function(
 {
   MST <- match.arg(MST)
   dim.reduction <- match.arg(dim.reduction)
+  original_dimension = nrow(x)
 
   if(dim.reduction=="pca")
   {
@@ -274,12 +314,22 @@ compute.stats <- function(
       x = pc$x
     }
   }
-  estimates = getStatistics(x, nrow(x), MST)
+  estimates = getStatistics(x, nrow(x), MST,T)
   result = list()
   result$tdt_measure = estimates$td
   result$tdt_effect = estimates$effect
   result$leaves = estimates$leafs
   result$diameter = estimates$diameter
+  result$mst = estimates$mst
+
+  #Number of dimensions before and after pca dimensionality reduction added to result
+  if(dim.reduction=="pca")
+  {
+    result$original_dimension = original_dimension
+    result$pca_components = ncol(x)
+  }
+
+  class(result)="treedim"
 
   return (result)
 }
@@ -305,37 +355,54 @@ compute.stats <- function(
 #' @export
 separability <- function(x,labels)
 {
+
+  if(missing(x)) stop("Argument x is required.")
+  if(missing(labels)) stop("Argument labels is required.")
+  if(nrow(x)!=length(labels)) stop("Length of labels does not match sample size of x")
+
+  #Get unique labels from vector of labels
   unique_labels = unique(labels)
+
+  #Paper tissue specificity
   label_purity = vector()
   edge_purity = vector()
   comb_purity = vector()
-  tree = convert_to_tree(x)
 
+  tree_info = get_edges(x,"boruvka")
+  tree = tree_info$tree
 
 
   for(i in unique_labels)
   {
 
-    #set of vertices for a unique label
+    ###set of vertices for a unique label
     s = which(labels %in% i)
 
-    #set starting index to 0
+    ###set starting index to 0
     s = s-1
 
-    #Obtain minimum subtree cover of vertices in s
+    ###Obtain minimum subtree cover of vertices in s
     res = minSubtreeCover(tree,s,labels)
 
 
-    #Vertices in s
+    ###Vertices in s
     a = length(s)
 
-    #Label purity for each unique label
+    ###Label purity for each unique label (paper tissue specificity)
     label_purity[i] = a/res$subtree_nodes
 
   }
 
+  tp = list()
+  mst_edges = tree_info$edges
 
-  return(list("label_separability"=label_purity, "overall_separability"= sum(label_purity)/length(unique_labels)))
+  #tissue specificity using original method used in the paper
+   tp = list("label_separability"=label_purity, "overall_separability"= sum(label_purity)/length(unique_labels), "mst"=list("edges"=  mst_edges, "labels"=labels))
+
+
+   class(tp)="treedim"
+
+   return(tp)
 }
 
 

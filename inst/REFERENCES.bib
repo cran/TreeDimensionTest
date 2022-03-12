@@ -1,7 +1,57 @@
 @article{Tenha:2022,
-	author = {Lovemore Tehna and Mingzhou Song},
-	journal = {PLoS Computational Biology},
+	doi = {10.1371/journal.pcbi.1009829},
+	author = {Tenha, Lovemore and Song, Mingzhou},
+	journal = {PLOS Computational Biology},
+	publisher = {Public Library of Science},
 	title = {Inference of trajectory presence by tree dimension and subset specificity by subtree cover},
 	year = {2022},
-	pages = {(Provisionally accepted)}
+	month = {02},
+	volume = {18},
+	number = {2},
+	url = {https://doi.org/10.1371/journal.pcbi.1009829},
+	pages = {e1009829},
+	abstract = {The complexity of biological processes such as cell differentiation is reflected in dynamic transitions between cellular states. Trajectory inference arranges the states into a progression using methodologies propelled by single-cell biology. However, current methods, all returning a best trajectory, do not adequately assess statistical significance of noisy patterns, leading to uncertainty in inferred trajectories. We introduce a tree dimension test for trajectory presence in multivariate data by a dimension measure of Euclidean minimum spanning tree, a test statistic, and a null distribution. Computable in linear time to tree size, the tree dimension measure summarizes the extent of branching more effectively than globally insensitive number of leaves or tree diameter indifferent to secondary branches. The test statistic quantifies trajectory presence and its null distribution is estimated under the null hypothesis of no trajectory in data. On simulated and real single-cell datasets, the test outperformed the intuitive number of leaves and tree diameter statistics. Next, we developed a measure for the tissue specificity of the dynamics of a subset, based on the minimum subtree cover of the subset in a minimum spanning tree. We found that tissue specificity of pathway gene expression dynamics is conserved in human and mouse development: several signal transduction pathways including calcium and Wnt signaling are most tissue specific, while genetic information processing pathways such as ribosome and mismatch repair are least so. Neither the tree dimension test nor the subset specificity measure has any user parameter to tune. Our work opens a window to prioritize cellular dynamics and pathways in development and other multivariate dynamical systems.},
+}
+
+
+
+@Misc{dynverse_data,
+	author       = {Robrecht Cannoodt and
+	Wouter Saelens and
+	Helena Todorov and
+	Yvan Saeys},
+	title        = {{Single-cell -omics datasets containing a
+	trajectory}},
+	month        = oct,
+	year         = 2018,
+	publisher    = {Zenodo},
+	version      = {2.0.0},
+	doi          = {10.5281/zenodo.1443566},
+	url          = {https://doi.org/10.5281/zenodo.1443566}
+}
+
+
+
+
+@ARTICLE{evodevo,
+	author        = {Cardoso-Moreira, Margarida and Halbert, Jean and Valloton, Delphine and Velten, Britta and Chen, Chunyan and Shao, Yi and Liechti, Angélica and Ascenção, Kelly and Rummel, Coralie and Ovchinnikova, Svetlana and Mazin, Pavel V. and Xenarios, Ioannis and Harshman, Keith and Mort, Matthew and Cooper, David N. and Sandi, Carmen and Soares, Michael J. and Ferreira, Paula G. and Afonso, Sandra and Carneiro, Miguel and Turner, James M. A. and VandeBerg, John L. and Fallahshahroudi, Amir and Jensen, Per and Behr, Rüdiger and Lisgo, Steven and Lindsay, Susan and Khaitovich, Philipp and Huber, Wolfgang and Baker, Julie and Anders, Simon and Zhang, Yong E. and Kaessmann, Henrik},
+
+	title          = {Gene expression across mammalian organ development},
+
+	journal        = {Nature},
+
+	volume         = {571},
+
+	number         = {7766},
+
+	pages          = {505--509},
+
+	year           = {2019},
+
+	doi            = {10.1038/s41586-019-1338-5},
+
+	url            = {https://doi.org/10.1038/s41586-019-1338-5}
+
+
+
 }

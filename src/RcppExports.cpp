@@ -65,16 +65,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_edges
+List get_edges(NumericMatrix& mat, String MST);
+RcppExport SEXP _TreeDimensionTest_get_edges(SEXP matSEXP, SEXP MSTSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix& >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< String >::type MST(MSTSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_edges(mat, MST));
+    return rcpp_result_gen;
+END_RCPP
+}
 // getStatistics
-List getStatistics(NumericMatrix& mat, int sample_size, String MST);
-RcppExport SEXP _TreeDimensionTest_getStatistics(SEXP matSEXP, SEXP sample_sizeSEXP, SEXP MSTSEXP) {
+List getStatistics(NumericMatrix& mat, int sample_size, String MST, bool returnTree);
+RcppExport SEXP _TreeDimensionTest_getStatistics(SEXP matSEXP, SEXP sample_sizeSEXP, SEXP MSTSEXP, SEXP returnTreeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix& >::type mat(matSEXP);
     Rcpp::traits::input_parameter< int >::type sample_size(sample_sizeSEXP);
     Rcpp::traits::input_parameter< String >::type MST(MSTSEXP);
-    rcpp_result_gen = Rcpp::wrap(getStatistics(mat, sample_size, MST));
+    Rcpp::traits::input_parameter< bool >::type returnTree(returnTreeSEXP);
+    rcpp_result_gen = Rcpp::wrap(getStatistics(mat, sample_size, MST, returnTree));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -93,36 +106,13 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// get_edges
-NumericVector get_edges(NumericMatrix& mat, String MST);
-RcppExport SEXP _TreeDimensionTest_get_edges(SEXP matSEXP, SEXP MSTSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix& >::type mat(matSEXP);
-    Rcpp::traits::input_parameter< String >::type MST(MSTSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_edges(mat, MST));
-    return rcpp_result_gen;
-END_RCPP
-}
-// convert_to_tree
-NumericMatrix convert_to_tree(NumericMatrix& mat);
-RcppExport SEXP _TreeDimensionTest_convert_to_tree(SEXP matSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix& >::type mat(matSEXP);
-    rcpp_result_gen = Rcpp::wrap(convert_to_tree(mat));
-    return rcpp_result_gen;
-END_RCPP
-}
 // minSubtreeCover
-List minSubtreeCover(NumericMatrix& tree, NumericVector s, StringVector labels);
+List minSubtreeCover(List& tree, NumericVector s, StringVector labels);
 RcppExport SEXP _TreeDimensionTest_minSubtreeCover(SEXP treeSEXP, SEXP sSEXP, SEXP labelsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix& >::type tree(treeSEXP);
+    Rcpp::traits::input_parameter< List& >::type tree(treeSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type s(sSEXP);
     Rcpp::traits::input_parameter< StringVector >::type labels(labelsSEXP);
     rcpp_result_gen = Rcpp::wrap(minSubtreeCover(tree, s, labels));
@@ -136,10 +126,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_TreeDimensionTest_get_longest_path_statistic", (DL_FUNC) &_TreeDimensionTest_get_longest_path_statistic, 1},
     {"_TreeDimensionTest_tree_dimension", (DL_FUNC) &_TreeDimensionTest_tree_dimension, 1},
     {"_TreeDimensionTest_to_adj_mat", (DL_FUNC) &_TreeDimensionTest_to_adj_mat, 1},
-    {"_TreeDimensionTest_getStatistics", (DL_FUNC) &_TreeDimensionTest_getStatistics, 3},
-    {"_TreeDimensionTest_computeDists", (DL_FUNC) &_TreeDimensionTest_computeDists, 5},
     {"_TreeDimensionTest_get_edges", (DL_FUNC) &_TreeDimensionTest_get_edges, 2},
-    {"_TreeDimensionTest_convert_to_tree", (DL_FUNC) &_TreeDimensionTest_convert_to_tree, 1},
+    {"_TreeDimensionTest_getStatistics", (DL_FUNC) &_TreeDimensionTest_getStatistics, 4},
+    {"_TreeDimensionTest_computeDists", (DL_FUNC) &_TreeDimensionTest_computeDists, 5},
     {"_TreeDimensionTest_minSubtreeCover", (DL_FUNC) &_TreeDimensionTest_minSubtreeCover, 3},
     {NULL, NULL, 0}
 };

@@ -21,20 +21,16 @@ to_adj_mat <- function(edges) {
     .Call('_TreeDimensionTest_to_adj_mat', PACKAGE = 'TreeDimensionTest', edges)
 }
 
-getStatistics <- function(mat, sample_size, MST) {
-    .Call('_TreeDimensionTest_getStatistics', PACKAGE = 'TreeDimensionTest', mat, sample_size, MST)
-}
-
-computeDists <- function(data, perm, sample_size, g, MST) {
-    .Call('_TreeDimensionTest_computeDists', PACKAGE = 'TreeDimensionTest', data, perm, sample_size, g, MST)
-}
-
 get_edges <- function(mat, MST) {
     .Call('_TreeDimensionTest_get_edges', PACKAGE = 'TreeDimensionTest', mat, MST)
 }
 
-convert_to_tree <- function(mat) {
-    .Call('_TreeDimensionTest_convert_to_tree', PACKAGE = 'TreeDimensionTest', mat)
+getStatistics <- function(mat, sample_size, MST, returnTree) {
+    .Call('_TreeDimensionTest_getStatistics', PACKAGE = 'TreeDimensionTest', mat, sample_size, MST, returnTree)
+}
+
+computeDists <- function(data, perm, sample_size, g, MST) {
+    .Call('_TreeDimensionTest_computeDists', PACKAGE = 'TreeDimensionTest', data, perm, sample_size, g, MST)
 }
 
 minSubtreeCover <- function(tree, s, labels) {

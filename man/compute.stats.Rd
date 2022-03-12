@@ -20,6 +20,9 @@ A list with the following components:
  \item tdt_effect Effect size for tree dimension
  \item leaves Number of leaf/degree1 vertices in the MST  of the data
  \item diameter The tree diameter of MST, where each edge is of unit length
+ \item original_dimension If "pca" is selected, the number of dimensions in the original dataset
+ \item pca_components If "pca" is selected, the number of pca components selected after dimensionality reduction
+ \item mst A vector of edges of the mst computed on x. Length of vector is always even.
  }
 }
 \description{

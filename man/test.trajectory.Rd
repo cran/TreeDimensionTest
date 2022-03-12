@@ -35,9 +35,20 @@ A list with the following components:
  \item leaves Number of leaf/degree1 vertices in the MST  of the data
  \item diameter The tree diameter of MST, where each edge is of unit length
  \item p.value The pvalue for the S statistic. Pvalue measures presence of trajectory in input x.
+ \item original_dimension If "pca" is selected, the number of dimensions in the original dataset
+ \item pca_components If "pca" is selected, the number of pca components selected after dimensionality reduction
+ \item mst A vector of edges of the mst computed on x. Length of vector is always even.
 }
 }
 \description{
 Computes the statistical significance for the presence of trajectory
 in multivariate data.
+}
+\details{
+If the input data is already after dimension reduction, use
+\code{dim.reduction="none"}. The method is described in
+\insertCite{Tenha:2022}{TreeDimensionTest}.
+}
+\references{
+\insertAllCited{}
 }

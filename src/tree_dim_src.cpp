@@ -18,6 +18,7 @@ typedef std::pair<double, int> iPair;
 
 
 
+
 /*// [[Rcpp::export]]
 NumericMatrix randomize(NumericMatrix & m)
 {
@@ -235,12 +236,12 @@ int ceiling2(int num, int div)
 }
 
 
-/* Returns ceiling of num divided by 2 */
+/* Returns ceiling of num divided by 2
 int ceiling(int num)
 {
   return (num/2) + (num % 2);
 }
-
+*/
 
 
 NumericVector get_degrees(std::vector<std::vector<int>> & tree)
@@ -309,12 +310,62 @@ std::vector<std::vector<int>> to_adj_mat(NumericMatrix edges)
 }
 
 
+/* Function returns list of edges as a vector; for igraph MST plot*/
+// [[Rcpp::export]]
+List get_edges(NumericMatrix& mat, String MST)
+{
+  std::vector<std::vector<int>> tree;
+  if(MST=="exact")
+  {
+    NumericMatrix dist_mat = calcPairwiseDist(mat);
+    tree = calculate_mst(dist_mat);
+
+  }
+
+
+  else if(MST=="boruvka")
+  {
+    //Obtain environment containing function
+    Rcpp::Environment package_env("package:mlpack");
+    //Rcpp::Environment::namespace_env(pkg)
+
+    // Make function callable from C++
+    Rcpp::Function boruvka_mst = package_env["emst"];
+
+    List emst_output = boruvka_mst(mat);
+    NumericMatrix edges = emst_output["output"];
+
+    //Transform MST format to adjacency matrix
+    tree = to_adj_mat(edges);
+  }
+
+  NumericVector edges;
+  int total_nodes = tree.size();
+
+  for(int i=0; i<total_nodes; i++)
+  {
+    int list_size = tree[i].size();
+
+    for(int j=0; j<list_size; j++)
+    {
+      if(i<tree[i][j]){
+        edges.push_back(i+1);
+        edges.push_back(tree[i][j]+1);
+      }
+    }
+  }
+
+  List output = List::create(_["tree"] = tree, _["edges"]=edges);
+  return output;
+}
+
+
 
 
 /*Computes all tdt statistics */
 
 // [[Rcpp::export]]
-List getStatistics(NumericMatrix& mat, int sample_size, String MST)
+List getStatistics(NumericMatrix& mat, int sample_size, String MST, bool returnTree)
 {
     // Adjacency list to hold minimum spanning tree
    std::vector<std::vector<int>> tree;
@@ -357,8 +408,22 @@ List getStatistics(NumericMatrix& mat, int sample_size, String MST)
   double effect =(log(max_td) - log(td)) / (log(max_td) - log(min_td));
   double s = effect * sample_size;
 
+  //Statistics to be returned as a list
+  List output;
+  //Return tree (as edges) if the returnTree argument is true. This is to avoid overhead of unnecessarily returning tree when
+  //computing distribution parameters
+  if(returnTree)
+  {
+     NumericVector tree_edges= get_edges(mat,MST)["edges"];
+     output = List::create(_["td"]=td, _["stat"]=s, _["effect"]=effect, _["leafs"]=td_stats["leafs"], _["diameter"]=td_stats["diameter"],_["mst"]=tree_edges);
+  }
 
-  List output = List::create(_["td"]=td, _["stat"]=s, _["effect"]=effect, _["leafs"]=td_stats["leafs"], _["diameter"]=td_stats["diameter"]);
+  //Return output without tree (edges)
+  else
+  {
+     output = List::create(_["td"]=td, _["stat"]=s, _["effect"]=effect, _["leafs"]=td_stats["leafs"], _["diameter"]=td_stats["diameter"]);
+
+  }
   return output;
 }
 
@@ -378,7 +443,7 @@ NumericVector computeDists(NumericMatrix& data, int perm, int sample_size, Funct
   for(unsigned int i=0; i<perm; i++)
   {
     randomized_data = g(data.nrow(), data.ncol(),i,perm);
-    td_dist[i] = getStatistics(randomized_data,sample_size, MST)["stat"];
+    td_dist[i] = getStatistics(randomized_data,sample_size, MST,false)["stat"];
 
   }
 
@@ -387,78 +452,33 @@ NumericVector computeDists(NumericMatrix& data, int perm, int sample_size, Funct
 
 
 
-/* Function returns list of edges as a vector*/
-// [[Rcpp::export]]
-NumericVector get_edges(NumericMatrix& mat, String MST)
-{
-  std::vector<std::vector<int>> tree;
-  if(MST=="exact")
-  {
-    NumericMatrix dist_mat = calcPairwiseDist(mat);
-    tree = calculate_mst(dist_mat);
-  }
 
 
-  else if(MST=="boruvka")
-  {
-    //Obtain environment containing function
-    Rcpp::Environment package_env("package:mlpack");
-    //Rcpp::Environment::namespace_env(pkg)
-
-    // Make function callable from C++
-    Rcpp::Function boruvka_mst = package_env["emst"];
-
-    List emst_output = boruvka_mst(mat);
-    NumericMatrix edges = emst_output["output"];
-
-    //Transform MST format to adjacency matrix
-    tree = to_adj_mat(edges);
-  }
-
-  NumericVector edges;
-  int total_nodes = tree.size();
-
-  for(int i=0; i<total_nodes; i++)
-  {
-    int list_size = tree[i].size();
-
-    for(int j=0; j<list_size; j++)
-    {
-      if(i<tree[i][j]){
-        edges.push_back(i+1);
-        edges.push_back(tree[i][j]+1);
-      }
-    }
-  }
-
-  return edges;
-}
-
-
-// [[Rcpp::export]]
-NumericMatrix convert_to_tree(NumericMatrix& mat)
-{
-  int total_nodes = mat.nrow();
-  std::vector<std::vector<int>> tree;
-  NumericMatrix mtree(total_nodes,total_nodes);
-  NumericMatrix dist_mat = calcPairwiseDist(mat);
-  tree = calculate_mst(dist_mat);
-
-  for(int i=0; i<total_nodes; i++)
-  {
-    int list_size = tree[i].size();
-    for(int j=0; j<list_size; j++)
-    {
-      mtree(i,tree[i][j])=1;
-      mtree(tree[i][j],i)=1;
-    }
-  }
-
-  return mtree;
-}
+// NumericMatrix convert_to_tree(NumericMatrix& mat)
+// {
+//   int total_nodes = mat.nrow();
+//   std::vector<std::vector<int>> tree;
+//   NumericMatrix mtree(total_nodes,total_nodes);
+//   NumericMatrix dist_mat = calcPairwiseDist(mat);
+//   tree = calculate_mst(dist_mat);
+//
+//   for(int i=0; i<total_nodes; i++)
+//   {
+//     int list_size = tree[i].size();
+//     for(int j=0; j<list_size; j++)
+//     {
+//       mtree(i,tree[i][j])=1;
+//       mtree(tree[i][j],i)=1;
+//     }
+//   }
+//
+//
+//
+//   return mtree;
+// }
 
 //Custom dfs for subtree cover
-void subtree_dfs(int vertex, NumericMatrix&tree, NumericVector& visited, NumericVector& inSubtree, int & pure_edges, StringVector& labels)
+void subtree_dfs(int vertex, List& tree, NumericVector& visited, NumericVector& inSubtree, int & pure_edges, StringVector& labels)
 {
 
   if(!visited[vertex])
@@ -466,15 +486,16 @@ void subtree_dfs(int vertex, NumericMatrix&tree, NumericVector& visited, Numeric
     visited[vertex]=true;
   }
 
-  for(int i=0; i<tree.nrow(); i++)
+  NumericVector adjacent_nodes = tree[vertex];
+  for(int i=0; i<adjacent_nodes.size(); i++)
   {
-    if(!visited[i] && tree(i,vertex)==1)
+    if(!visited[adjacent_nodes[i]])
     {
-      subtree_dfs(i,tree, visited, inSubtree, pure_edges, labels);
-      if(inSubtree[i])
+      subtree_dfs(adjacent_nodes[i],tree, visited, inSubtree, pure_edges, labels);
+      if(inSubtree[adjacent_nodes[i]])
       {
         inSubtree[vertex] = 1;
-        if(labels[vertex]==labels[i])
+        if(labels[vertex]==labels[adjacent_nodes[i]])
           pure_edges ++;
 
       }
@@ -486,10 +507,10 @@ void subtree_dfs(int vertex, NumericMatrix&tree, NumericVector& visited, Numeric
 
 /*Computes minimum subtree cover for a set of nodes s on a tree */
 // [[Rcpp::export]]
-List minSubtreeCover (NumericMatrix& tree, NumericVector s, StringVector labels)
+List minSubtreeCover (List& tree, NumericVector s, StringVector labels)
 {
   int s_size = s.size();
-  int tree_size = tree.nrow();
+  int tree_size = tree.size();
   int pure_edges = 0;
   NumericVector visited(tree_size);
   NumericVector is_in_subtree(tree_size);
